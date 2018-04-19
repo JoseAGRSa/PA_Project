@@ -36,20 +36,20 @@ public class WithGenericFunctions {
 		ctMethod.instrument(new ExprEditor() {
 			            public void edit(MethodCall m) throws CannotCompileException {
                             try {
-                                m.getMethod().insertBefore("{Handler dealer = new Handler();}");
+                                m.getMethod().insertBefore("{ist.meic.pa.GenericFunctions.Handler dealer = new ist.meic.pa.GenericFunctions.Handler();}");
                                 CtClass explain = m.getMethod().getDeclaringClass();
-                                String className = explain.getSimpleName();
+                                String className = explain.getName();
                                 if(explain.hasAnnotation(GenericFunction.class)){
                                     String it = m.getMethod().getName();
-                                    String replace = "{dealer.handleMethodCall($$,\n" + it + "\n)}";
-                                    //m.replace(replace);
-                                    System.out.println(replace);
+                                    String replace = "{new ist.meic.pa.GenericFunctions.Handler().handleMethodCall($args,\"" + it + "\",\"" + className + "\");}";
+                                    m.replace(replace);
                                 }
                             } catch (NotFoundException e) {
                                 e.printStackTrace();
                             }
                         }
 			        });
+		exemplo.toClass();
 		
 		Class example = Class.forName("ist.meic.pa.GenericFunctions.Exemplo");
 		
@@ -60,4 +60,8 @@ public class WithGenericFunctions {
 	    meth.invoke(null, (Object) params);
 
 	}
+
+	public static void print(String s){
+	    System.out.println(s);
+    }
 }
