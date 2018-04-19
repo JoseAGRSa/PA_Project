@@ -36,26 +36,14 @@ public class WithGenericFunctions {
 		ctMethod.instrument(new ExprEditor() {
 			            public void edit(MethodCall m) throws CannotCompileException {
                             try {
+                                m.getMethod().insertBefore("{Handler dealer = new Handler();}");
                                 CtClass explain = m.getMethod().getDeclaringClass();
                                 String className = explain.getSimpleName();
                                 if(explain.hasAnnotation(GenericFunction.class)){
-                                    CtMethod[] mts = explain.getDeclaredMethods();
-                                    for(CtMethod ctm : mts){
-                                        String name = ctm.getName();
-                                        CtClass[] ctc = ctm.getParameterTypes();
-                                        for(CtClass ctcl : ctc){
-                                            if(!ctcl.getSimpleName().equals("Object")){
-                                                name += "_" + ctcl.getSimpleName();
-                                            }
-                                        }
-                                        ctm.setName(name);
-                                    }
-                                    String ib = "{String name = $1.getClass().getSimpleName(); Method m = " + className +
-                                            ".class.getMethod(\"" + m.getMethod().getName() +
-                                            "_\" + name, $1.getClass().getName().class);}";
-                                    //System.out.println("IB: " + ib);
-                                    m.getMethod().insertBefore(ib);
-                                    explain.toClass();
+                                    String it = m.getMethod().getName();
+                                    String replace = "{dealer.handleMethodCall($$,\n" + it + "\n)}";
+                                    //m.replace(replace);
+                                    System.out.println(replace);
                                 }
                             } catch (NotFoundException e) {
                                 e.printStackTrace();

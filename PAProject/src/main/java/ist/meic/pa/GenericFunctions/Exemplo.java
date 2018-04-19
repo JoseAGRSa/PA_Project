@@ -7,8 +7,6 @@ public class Exemplo {
 		for(Object o : objs) {
 			Explain.it(o);
 		}
-
-
 	}
 }
 	
