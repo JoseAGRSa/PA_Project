@@ -1,15 +1,21 @@
 package ist.meic.pa.GenericFunctions;
 
+import com.sun.tools.javac.util.ArrayUtils;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.Class.*;
 
 public class Handler {
+
+    ClassComparator cc = new ClassComparator();
 
     public void handleMethodCall(Object[] args,
                                  String methodName, String className) {
@@ -24,10 +30,8 @@ public class Handler {
             }
             Class<?> c = Class.forName(className);
 
-            Method m = c.getDeclaredMethod(methodName, parametersTypes);
-            //WithGenericFunctions.print("" + c.isAnnotationPresent(GenericFunction.class));
             handleBeforeMethods(c,args);
-            m.invoke(m,args);
+            handleMethods(c,args);
             handleAfterMethods(c,args);
 
         } catch (Exception e) {
@@ -35,27 +39,39 @@ public class Handler {
         }
     }
 
+    public void handleMethods(Class<?> c, Object[] args){
+        try {
+            Method[] ms = sort(c.getDeclaredMethods(),args);
+            for(Method m: ms){
+                if(!m.isAnnotationPresent(BeforeMethod.class) && !m.isAnnotationPresent(AfterMethod.class)){
+                    Class<?>[] paramTypes = m.getParameterTypes();
+                    List<Class<?>> paramTypesToList = new ArrayList<>(Arrays.asList(paramTypes));
+                    if(m.getParameterTypes().length==args.length){
+                        if(manage(paramTypesToList, args)){
+                            m.invoke(m,args);
+                        }
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void handleBeforeMethods(Class<?> c, Object[] args){
         try {
-            for(Method m: c.getDeclaredMethods()){
+            Method[] ms = sort(c.getDeclaredMethods(),args);
+            for(Method m: ms){
                 if(m.isAnnotationPresent(BeforeMethod.class)){
-                    Class<?> aux = args[0].getClass();
-                    WithGenericFunctions.print(aux.getName());
-                    List<Class<?>> supers = getAllSuperClass(aux);
-                    WithGenericFunctions.print("" + supers);
-
-                    Class<?>[] pr  = m.getParameterTypes();
-                    List<Class<?>> auxToList = new ArrayList<>();
-
-                    for(Class<?> a: pr){
-                        auxToList.add(a);
+                    Class<?>[] paramTypes = m.getParameterTypes();
+                    List<Class<?>> paramTypesToList = new ArrayList<>(Arrays.asList(paramTypes));
+                    if(m.getParameterTypes().length==args.length){
+                        if(manage(paramTypesToList, args)){
+                            m.invoke(m,args);
+                        }
                     }
-
-                    if(manage(auxToList,args)){
-                        m.invoke(m,args);
-                    }
-
-
                 }
             }
         } catch (IllegalAccessException e) {
@@ -67,12 +83,17 @@ public class Handler {
 
     public void handleAfterMethods(Class<?> c, Object[] args){
         try {
-            for(Method m: c.getDeclaredMethods()){
+            Method[] ms = sort(c.getDeclaredMethods(),args);
+            List<Method> msToList = new ArrayList<>(Arrays.asList(ms));
+            Collections.reverse(msToList);
+            for(Method m: msToList){
                 if(m.isAnnotationPresent(AfterMethod.class)){
-                    Class<?> aux = args[0].getClass();
-                    List<Class<?>> supers = getAllSuperClass(aux);
-                    if(manage(supers, args)){
-                        m.invoke(m,args);
+                    Class<?>[] paramTypes = m.getParameterTypes();
+                    List<Class<?>> paramTypesToList = new ArrayList<>(Arrays.asList(paramTypes));
+                    if(m.getParameterTypes().length==args.length){
+                        if(manage(paramTypesToList, args)){
+                            m.invoke(m,args);
+                        }
                     }
                 }
             }
@@ -83,10 +104,9 @@ public class Handler {
         }
     }
 
-    //TODO: VERIFICAR SE O TAMANHO DO ARGS E IGUAL AO TAMANHO DOS PARAMETROS
     public Boolean manage(List<Class<?>> params, Object[] args){
         Object[] aux = args;
-        if(getAllSuperClass(args[0].getClass()).contains(params.get(0))){
+        if(params.get(0).isAssignableFrom(args[0].getClass())){
             if(params.size()>1){
                 params.remove(0);
             }
@@ -94,7 +114,7 @@ public class Handler {
                 aux = Arrays.copyOfRange(args,1,args.length);
             }
             if(params.size()!=1 && aux.length!=1){
-                manage(params,aux);
+                return manage(params,aux);
             }
             return true;
         }
@@ -102,17 +122,61 @@ public class Handler {
 
     }
 
-    public List<Class<?>> getAllSuperClass(Class<?> c){
-        List<Class<?>> list = new ArrayList<>();
+    public Method[] sort(Method[] mts, Object[] args){
+        List<Method> mtsToList = new ArrayList<>(Arrays.asList(mts));
+        Method[] sortedMethods = new Method[mtsToList.size()];
+        int tamanho = mtsToList.size();
 
-        while(c!=Class.class){
-            list.add(c);
-            if(c.getSuperclass()==null){
-                break;
+        for(int i=0; i<tamanho; i++){
+            Method aux = getMostSpecific(mtsToList,args);
+            if(aux!=null){
+                sortedMethods[i] = aux;
             }
-            c=c.getSuperclass();
+            mtsToList.remove(sortedMethods[i]);
+        }
+        return sortedMethods;
+    }
+
+    public Method getMostSpecific(List<Method> mts, Object[] args){
+
+        List<Method> mtsAux = new ArrayList<>(mts);
+        if(mts.size()==1){
+            return mts.get(0);
         }
 
-        return list;
+        for(Method m1: mts){
+            Class<?>[] m1Params = m1.getParameterTypes();
+            for(Method m2: mts){
+                if(mts.indexOf(m1)!=mts.indexOf(m2)){
+                    Class<?>[] m2Params = m2.getParameterTypes();
+                    int ret = cc.compare(m1Params,m2Params);
+                    //WithGenericFunctions.print("RET: " + ret);
+                    if(ret==1){
+                        mtsAux.remove(m1);
+                        return getMostSpecific(mtsAux, args);
+                    }
+                    else if(ret==0 || ret==-1){
+                        mtsAux.remove(m2);
+                        return getMostSpecific(mtsAux,args);
+                    }
+                    else{
+                        Class<?>[] t = args[0].getClass().getInterfaces();
+                        if(t.length>0) {
+                            if(m1.getParameterTypes()[0]==t[0]){
+                                mtsAux.remove(m1);
+                                return getMostSpecific(mtsAux,args);
+                            }
+                            else{
+                                mtsAux.remove(m2);
+                                return getMostSpecific(mtsAux,args);
+                            }
+                        }
+                            mtsAux.remove(m1);
+                            return getMostSpecific(mtsAux,args);
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

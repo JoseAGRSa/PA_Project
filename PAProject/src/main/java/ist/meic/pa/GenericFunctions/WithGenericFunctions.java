@@ -29,7 +29,7 @@ public class WithGenericFunctions {
 		pool.importPackage("java.lang.reflect");
 		pool.importPackage("java.lang.Class");
 
-		CtClass exemplo = pool.get("ist.meic.pa.GenericFunctions.Exemplo");
+		CtClass exemplo = pool.get(args[0]);
 
 		CtMethod ctMethod = exemplo.getDeclaredMethod("main");
 
@@ -51,7 +51,7 @@ public class WithGenericFunctions {
 			        });
 		exemplo.toClass();
 		
-		Class example = Class.forName("ist.meic.pa.GenericFunctions.Exemplo");
+		Class example = Class.forName(args[0]);
 		
 		Method meth = example.getMethod("main", String[].class);
 
