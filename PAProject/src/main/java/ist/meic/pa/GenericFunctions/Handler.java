@@ -1,17 +1,13 @@
 package ist.meic.pa.GenericFunctions;
 
-import com.sun.tools.javac.util.ArrayUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static java.lang.Class.*;
 
 public class Handler {
 

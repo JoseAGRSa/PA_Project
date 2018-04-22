@@ -36,19 +36,30 @@ public class WithGenericFunctions {
 		ctMethod.instrument(new ExprEditor() {
 			            public void edit(MethodCall m) throws CannotCompileException {
                             try {
-                                m.getMethod().insertBefore("{ist.meic.pa.GenericFunctions.Handler dealer = new ist.meic.pa.GenericFunctions.Handler();}");
+                               // m.getMethod().insertBefore("{ist.meic.pa.GenericFunctions.Handler dealer = new ist.meic.pa.GenericFunctions.Handler();}");
                                 CtClass explain = m.getMethod().getDeclaringClass();
                                 String className = explain.getName();
                                 if(explain.hasAnnotation(GenericFunction.class)){
+
+                                    /*
+                                    TIRA ESTE COMENTARIO PARA VERES O ERRO
+                                    handleMethodCalls(explain, className);
+                                    explain.toClass();
+                                     */
+
                                     String it = m.getMethod().getName();
                                     String replace = "{new ist.meic.pa.GenericFunctions.Handler().handleMethodCall($args,\"" + it + "\",\"" + className + "\");}";
                                     m.replace(replace);
+
                                 }
                             } catch (NotFoundException e) {
                                 e.printStackTrace();
                             }
                         }
 			        });
+
+
+
 		exemplo.toClass();
 		
 		Class example = Class.forName(args[0]);
@@ -60,6 +71,49 @@ public class WithGenericFunctions {
 	    meth.invoke(null, (Object) params);
 
 	}
+
+	public static void handleMethodCalls(CtClass explain, String className){
+
+		CtMethod[] methods = explain.getMethods();
+
+		for(CtMethod ctm : methods){
+        //cada metodo da classe Explain
+                try {
+                    ctm.instrument(new ExprEditor() {
+                        public void edit(MethodCall m) {
+
+                            //cada method call dentro de cada metodo da classe Explain
+                            try {
+                                if(m.getMethod().getDeclaringClass().hasAnnotation(GenericFunction.class)) {
+                                    /*
+                                    se o metodo da method call pertencer a uma classe anotada com
+                                    GenericFunction, enviar a method call para o Handler
+                                    */
+                                        String it = ctm.getName();
+                                        System.out.println("metodo = " + it);
+                                        String replace = "{new ist.meic.pa.GenericFunctions.Handler().handleMethodCall($args,\"" + it + "\",\"" + className + "\");}";
+                                        System.out.println(replace);
+                                        m.replace(replace);
+
+                                }
+                            } catch (NotFoundException e) {
+                                e.printStackTrace();
+                            } catch (CannotCompileException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    });
+                } catch (CannotCompileException e) {
+                    e.printStackTrace();
+                }
+            }
+
+		}
+
+
+
+
 
 	public static void print(String s){
 	    System.out.println(s);
