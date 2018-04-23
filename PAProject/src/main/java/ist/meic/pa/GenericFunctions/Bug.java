@@ -17,7 +17,5 @@ public class Bug {
     public static void bug(Foo f){
         System.out.println("Foo");
     }
-    public static void bug(Bar b){
-        System.out.println("Bar");
-    }
+    public static void bug(Bar b){ System.out.println("Bar"); }
 }

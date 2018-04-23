@@ -1,29 +1,28 @@
 package ist.meic.pa.GenericFunctions;
 
-import java.lang.reflect.Method;
+import ist.meic.pa.GenericFunctions.AfterMethod;
+import ist.meic.pa.GenericFunctions.BeforeMethod;
+import ist.meic.pa.GenericFunctions.GenericFunction;
 
 @GenericFunction
-interface Explain {
+public interface Explain {
+    public static void it(Integer i) {
+        System.out.print(i + " is an integer");
+    }
+    public static void it(Double i) {
+        System.out.print(i + " is a double");
+    }
+    public static void it(String s) {
+        System.out.print(s + " is a string");
+    }
 
-	public static void it(Integer i) {
-		System.out.print(i + " is an integer");
-	}
+    @BeforeMethod
+    public static void it(Number n) {
+        System.out.print("The number");
+    }
 
-	public static void it(Double i) {
-		System.out.print(i + " is a double");
-	}
-
-	public static void it(String s) {
-		System.out.print(s + " is a string");
-	}
-
-	@BeforeMethod
-	public static void it(Number n) {
-		System.out.print("The number ");
-	}
-
-	@AfterMethod
-	public static void it(Object o){
-		System.out.println(".");
-	}
+    @AfterMethod
+    public static void it(Object o) {
+        System.out.println(".");
+    }
 }

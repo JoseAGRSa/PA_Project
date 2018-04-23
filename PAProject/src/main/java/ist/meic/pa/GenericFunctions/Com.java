@@ -7,7 +7,7 @@ import java.util.Vector;
 @GenericFunction
 public interface Com {
     // Test B and D
-    public static Object bine(Object a) { return "Object";}
+    public static Object bine(Object a) {return "Object";}
     public static String bine(String a) { return a; }
     public static Integer bine(Integer a) { return a; }
     public static Object bine(Object[] arr) {

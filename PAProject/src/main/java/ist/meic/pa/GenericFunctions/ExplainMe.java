@@ -17,13 +17,14 @@ public class ExplainMe {
 
     public static void twoThings(Number o1, Integer o2) {
         System.out.printf("Woho!! I'm the primary!\n");
+
     }
 
     @BeforeMethod
     public static void twoThings(Integer o1, Number o2) {
         System.out.println("How come Integer-Integer is more specific than me?");
     }
-    @BeforeMethod
+    //@BeforeMethod
     public static void twoThings(Integer o1, Integer o2) {
         System.out.println("Let me be the first!");
 

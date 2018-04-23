@@ -1,6 +1,13 @@
 package ist.meic.pa.GenericFunctions;
 
 
+import javassist.CannotCompileException;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.NotFoundException;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -13,7 +20,7 @@ public class Handler {
 
     ClassComparator cc = new ClassComparator();
 
-    public void handleMethodCall(Object[] args,
+    public Object handleMethodCall(Object[] args,
                                  String methodName, String className) {
 
         try {
@@ -26,25 +33,29 @@ public class Handler {
             }
             Class<?> c = Class.forName(className);
 
-            handleBeforeMethods(c,args);
-            handleMethods(c,args);
-            handleAfterMethods(c,args);
+            handleBeforeMethods(c, methodName,args);
+            Object o = handleMethods(c, methodName,args);
+            handleAfterMethods(c, methodName,args);
 
+            return o;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
-    public void handleMethods(Class<?> c, Object[] args){
+    public Object handleMethods(Class<?> c, String methodName, Object[] args){
         try {
             Method[] ms = sort(c.getDeclaredMethods(),args);
             for(Method m: ms){
+                WithGenericFunctions.print(args.getClass().getName());
                 if(!m.isAnnotationPresent(BeforeMethod.class) && !m.isAnnotationPresent(AfterMethod.class)){
                     Class<?>[] paramTypes = m.getParameterTypes();
                     List<Class<?>> paramTypesToList = new ArrayList<>(Arrays.asList(paramTypes));
                     if(m.getParameterTypes().length==args.length){
-                        if(manage(paramTypesToList, args)){
-                            m.invoke(m,args);
+                        if(manage(paramTypesToList, args) && m.getName().equals(methodName)){
+                            WithGenericFunctions.print("Dsfddsf");
+                            return m.invoke(m,args);
                         }
                     }
                 }
@@ -54,9 +65,10 @@ public class Handler {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
-    public void handleBeforeMethods(Class<?> c, Object[] args){
+    public void handleBeforeMethods(Class<?> c, String methodName, Object[] args){
         try {
             Method[] ms = sort(c.getDeclaredMethods(),args);
             for(Method m: ms){
@@ -64,7 +76,7 @@ public class Handler {
                     Class<?>[] paramTypes = m.getParameterTypes();
                     List<Class<?>> paramTypesToList = new ArrayList<>(Arrays.asList(paramTypes));
                     if(m.getParameterTypes().length==args.length){
-                        if(manage(paramTypesToList, args)){
+                        if(manage(paramTypesToList, args) && m.getName().equals(methodName)){
                             m.invoke(m,args);
                         }
                     }
@@ -77,7 +89,7 @@ public class Handler {
         }
     }
 
-    public void handleAfterMethods(Class<?> c, Object[] args){
+    public void handleAfterMethods(Class<?> c, String methodName, Object[] args){
         try {
             Method[] ms = sort(c.getDeclaredMethods(),args);
             List<Method> msToList = new ArrayList<>(Arrays.asList(ms));
@@ -87,7 +99,7 @@ public class Handler {
                     Class<?>[] paramTypes = m.getParameterTypes();
                     List<Class<?>> paramTypesToList = new ArrayList<>(Arrays.asList(paramTypes));
                     if(m.getParameterTypes().length==args.length){
-                        if(manage(paramTypesToList, args)){
+                        if(manage(paramTypesToList, args) && m.getName().equals(methodName)){
                             m.invoke(m,args);
                         }
                     }
@@ -115,11 +127,15 @@ public class Handler {
             return true;
         }
         return false;
-
     }
 
     public Method[] sort(Method[] mts, Object[] args){
-        List<Method> mtsToList = new ArrayList<>(Arrays.asList(mts));
+        List<Method> mtsToList = new ArrayList<>();
+        for(Method m: mts){
+            if(m.getParameterTypes().length==args.length){
+                mtsToList.add(m);
+            }
+        }
         Method[] sortedMethods = new Method[mtsToList.size()];
         int tamanho = mtsToList.size();
 
@@ -146,7 +162,6 @@ public class Handler {
                 if(mts.indexOf(m1)!=mts.indexOf(m2)){
                     Class<?>[] m2Params = m2.getParameterTypes();
                     int ret = cc.compare(m1Params,m2Params);
-                    //WithGenericFunctions.print("RET: " + ret);
                     if(ret==1){
                         mtsAux.remove(m1);
                         return getMostSpecific(mtsAux, args);

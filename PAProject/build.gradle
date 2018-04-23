@@ -16,7 +16,7 @@ dependencies {
 }
 
 run{
-    args 'ist.meic.pa.GenericFunctions.Exemplo'
+    args 'ist.meic.pa.GenericFunctions.TestD'
 }
 
 mainClassName='ist.meic.pa.GenericFunctions.WithGenericFunctions'
